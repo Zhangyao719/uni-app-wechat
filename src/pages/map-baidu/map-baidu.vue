@@ -93,7 +93,7 @@ onMounted(() => {
       :latitude="latitude"
       :scale="14"
       :markers="markers"
-      :bindmarkertap="handleMakerTap"
+      @markertap="handleMakerTap"
     ></map>
   </view>
   <view class="rgc_info">
