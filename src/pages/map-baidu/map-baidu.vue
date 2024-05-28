@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import type { UniSearchBarBaseEvent } from '@uni-helper/uni-ui-types'
-// import type { MapMarker } from '@uni-helper/uni-app-types'
 import { ref, reactive, onMounted } from 'vue'
 import BaiduMapWX from '@/lib/bmap-wx'
+import type { UniSearchBarBaseEvent } from '@uni-helper/uni-ui-types'
+import type { MapOnMarkertapEvent } from '@uni-helper/uni-app-types'
+import type { BMapMarker, BMapSearchParam } from '@/types/map'
 
-const wxMarkerData = []
 const longitude = ref()
 const latitude = ref()
-const markers = ref([])
+const markers = ref<BMapMarker[]>([])
 const placeData = reactive({
   title: '',
   address: '',
@@ -19,35 +19,26 @@ const baiduMapSDK = new BaiduMapWX({
   ak: 'VHz9gXZ3boJkS7xozrHrHXvjA6itFZnj',
 })
 
-const showSearchInfo = (i: number) => {
-  if (markers.value.length) {
-    const { title, address, telephone } = markers.value[i]
-    placeData.title = '名称：' + title + '\n'
-    placeData.address = '地址：' + address + '\n'
-    placeData.telephone = '电话：' + telephone
-  }
+const showTagInfo = (id: number) => {
+  const { title, address, telephone = '' } = markers.value[id]
+  placeData.title = '名称：' + title
+  placeData.address = '地址：' + address
+  placeData.telephone = '电话：' + telephone
 }
 
-// const changeMarkerColor = (data, i) => {
-//   const markerArr = []
-//   for (var j = 0; j < data.length; j++) {
-//     if (j == i) {
-//       // 此处需要在相应路径放置图片文件
-//       data[j].iconPath = '@/static/images/marker_yellow.png'
-//     } else {
-//       // 此处需要在相应路径放置图片文件
-//       data[j].iconPath = '@/static/images/marker_red.png'
-//     }
-//     markerArr[j](data[j])
-//   }
+// prettier-ignore
+const changeMarkerColor = (id: number) => {
+  markers.value.forEach((m, index) => {
+    m.iconPath = id === index
+      ? '../../static/images/marker_yellow.png'
+      : '../../static/images/marker_red.png'
+  })
+}
 
-//   markers.value = markerArr
-// }
-
-const handleMakerTap = (e) => {
+const handleMakerTap = (e: MapOnMarkertapEvent) => {
   console.log('🚀 ~ MakerTap:', e)
-  showSearchInfo(e.markerId)
-  // changeMarkerColor(e.markerId)
+  showTagInfo(e.markerId)
+  changeMarkerColor(e.markerId)
 }
 
 const handleSearch = (e: UniSearchBarBaseEvent) => {
@@ -56,17 +47,17 @@ const handleSearch = (e: UniSearchBarBaseEvent) => {
     query: e.value,
     success({ wxMarkerData /* , originalData */ }) {
       console.log('🚀 ~ wxMarkerData:', wxMarkerData)
-      const markerList = wxMarkerData.map((m) => ({ ...m, width: 25, height: 35 }))
-      markers.value = markerList
-      latitude.value = markerList[0].latitude
-      longitude.value = markerList[0].longitude
+      markers.value = wxMarkerData
     },
     fail(err) {
       console.log('baidu search fail:', err)
     },
-    // iconPath: '../../static/images/marker_red.png',
-    // iconTapPath: '../../static/images/marker_yellow.png',
-  })
+    iconPath: '../../static/images/marker_red.png',
+    iconTapPath: '../../static/images/marker_yellow.png',
+    width: 25,
+    height: 35,
+    alpha: 0.9,
+  } as BMapSearchParam)
 }
 
 onMounted(() => {
